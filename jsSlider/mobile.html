@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimun-scale=1.0,user-scalable=no">
+      <meta name="apple-touch-fullscreen" content="yse">
+      <meta name="apple-mobile-web-app-status-bar-style" content="black">
+      <style>
+          body{
+                margin: 0;
+                padding: 0;
+                background: #333;
+                overflow: hidden;
+                   /*position:absolute;   */
+            }
+            #wrap{height:100%;width: 100%;
+		overflow: hidden;}
+    	ul,li{
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		background:red;
+		overflow: hidden;
+        height: 100%;
+        	
+	}
+    li{
+	   position:absolute;
+		display:flex;
+	     height:100%;
+         justify-content:center;
+         align-items:center;
+         /*display:table-cell;
+         vertical-align:middle;*/
+        
+	 }
+     li img {
+       
+		max-width: 100%;
+		max-height: 100%;
+	}
+
+ 
+      
+      </style>
+      <body>
+        <div id="wrap">
+           
+        </div>
+
+        <script>
+          var list = [{
+                        height: 950,
+                        width: 800,
+                        img: "imgs/1.jpg"
+                    },
+                    {
+                        height: 1187,
+                        width: 900,
+                        img: "imgs/2.jpg"
+                    },
+                    {
+                        height: 766,
+                        width: 980,
+                        img: "imgs/3.jpg"
+                    },
+                    {
+                        height: 754,
+                        width: 980,
+                        img: "imgs/4.jpg"
+                    },
+                    {
+                        height: 493,
+                        img: "imgs/5.jpg",
+                        width: 750
+                    },
+                    {
+                        height: 500,
+                        img: "imgs/6.jpg",
+                        width: 750
+                    },
+                    {	
+                        height: 600,
+                        img: "imgs/7.jpg",
+                        width: 400
+                    }];
+
+            function  Slider(opts){
+                this.wrap = opts.dom;
+                this.list = opts.list;
+                this.init();
+                this.renderDOM();
+                this.bindDOM();
+            }     
+
+            Slider.prototype.init = function(){
+                this.radio = window.innerHeight/window.innerWidth;
+                this.scaleW = window.innerWidth;
+                this.idx = 0;
+            }
+           
+            //  Slider.renderDOM = (function(){
+            //      
+            Slider.prototype.renderDOM = function(){
+              
+                var fragment = document.createDocumentFragment();
+                var wrap = this.wrap;
+                var data = this.list;
+                var len = data.length;
+                this.outer = document.createElement("ul");
+                for(var i=0;i<len;i++){
+                    var li = document.createElement("li");
+                    var item = data[i];
+                    li.style.width = window.innerWidth;
+                    li.style.webkitTransform = 'translate3d('+i*this.scaleW+'px,0,0)';
+                    if(item&&item['height']/item['width']>this.radio){
+                        li.innerHTML = '<img height="'+ window.innerHeight +'" src="'+ item['img'] +'">';
+                    }else if(item){
+                        li.innerHTML = '<img width="'+window.innerWidth+'" src="'+item['img']+'"/>';
+                    }
+                    this.outer.appendChild(li);
+                }
+                fragment.appendChild(this.outer);
+                this.outer.style.width=this.scaleW+"px";
+                // this.outer.style.cssText = 'width:' + this.scaleW +'px';
+                this.wrap.appendChild(fragment);
+
+               
+            }
+
+            Slider.prototype.bindDOM = function(){
+                 var self = this;
+                 var scaleW = self.scaleW;
+                 var outer = self.outer;
+                 var len = self.list.length;
+                 
+                 var startHandler = function(evt){
+                    self.startTime = new Date()-0;
+                    self.startX = evt.targetTouches[0].pageX;
+                    self.offsetX = 0;
+                    var target = evt.target
+                    while(target.nodeName != 'LI' && target.nodeName != 'BODY'){
+                        target = target.parentNode;
+                    }
+                 }
+
+                 var moveHandler = function(evt){
+                     evt.preventDefault();
+                     self.offsetX = evt.targetTouches[0].pageX - self.startX;
+                     var lis = outer.getElementsByTagName('li');
+                     var i = self.idx - 1;
+                     var m = i+3;
+                     for(i;i<m;i++){
+                        lis[i] && (lis[i].style.webkitTransition = '-webkit-transform 0s ease-out');
+				    	lis[i] && (lis[i].style.webkitTransform = 'translate3d('+ ((i-self.idx)*self.scaleW + self.offsetX) +'px, 0, 0)');
+                     }
+                 }
+
+                 Slider.prototype.goIndex = function(n){
+                     var idx = this.idx;
+                     var lis = this.outer.getElementsByTagName("li");
+                     var len = lis.length;
+                     var cidx;
+                     if(typeof n == 'number'){
+                         cidx = idx;
+                     }else if(typeof n == 'string'){
+                        cidx = idx + n*1;
+                     }
+
+                     if(cidx>len-1){
+                         cidx = len -1
+                     }else if(cidx<0){
+                        cidx = 0;
+                     }
+
+                     this.idx = cidx;
+                     lis[cidx].style.webkitTransition = '-webkit-transform 0.2s ease-out';
+			         lis[cidx-1] && (lis[cidx-1].style.webkitTransition = '-webkit-transform 0.2s ease-out');
+			         lis[cidx+1] && (lis[cidx+1].style.webkitTransition = '-webkit-transform 0.2s ease-out');
+                
+                     lis[cidx].style.webkitTransform = 'translate3d(0, 0, 0)';
+			         lis[cidx-1] && (lis[cidx-1].style.webkitTransform = 'translate3d(-'+ this.scaleW +'px, 0, 0)');
+			         lis[cidx+1] && (lis[cidx+1].style.webkitTransform = 'translate3d('+ this.scaleW +'px, 0, 0)');
+                 }
+
+                 var endHandler = function(evt){
+                     evt.preventDefault();
+                     var boundary = scaleW/6;
+                     var endTime = new Date() -0;
+                     var lis = outer.getElementsByTagName('li');
+                     if(endTime- self.startTime>300){
+                          if(self.offsetX>boundary){
+                              self.goIndex('-1');
+                          }else if(self.offsetX<0&&self.offsetX < -boundary){
+                               self.goIndex('+1');
+                          }else{
+                              self.goIndex('0');
+                          }
+                     }else{
+                         	if(self.offsetX > 50){
+                                self.goIndex('-1');
+                            }else if(self.offsetX < -50){
+                                self.goIndex('+1');
+                            }else{
+                                self.goIndex('0');
+                            }
+                     }
+                 }
+                outer.addEventListener('touchstart', startHandler);
+                outer.addEventListener('touchmove', moveHandler);
+                outer.addEventListener('touchend', endHandler);
+            }
+
+          new Slider({
+              dom:document.getElementById("wrap"),
+              list :list
+          })   
+   
+        </script>
+      </body>
+  </head>
+</html>
