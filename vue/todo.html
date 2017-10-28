@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>todo list</title>
+    <script type="text/javascript" src="vue.js"></script>
+    <style type="text/css">
+        ul{list-style:none;}
+        .gl{text-decoration: line-through;}
+
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <input type="checkbox" id="allInput" @click="selectAll">
+            <input type="text" @keyup="addlist" id="newlist">
+            <button class="btn" @click="addlist">add</button>
+        </header>
+        <section>
+            <ul>
+                <li v-for="(item,index) in oldArr" >
+                    <input type="checkbox"  v-model="item.iscom" @click="choseCom"/>
+                    <span :class={gl:item.iscom} style>{{item.title}}</span>
+                    <button style="margin-left:50px" @click="deletli(index)">x</button>
+                </li>
+                <!-- <li style="text-decoration: line-through">
+                    <input type="checkbox">
+                    <span>todo 1</span>
+                </li>  
+                <li>
+                    <input type="checkbox">
+                    <span contentEditable="true">todo 1</span>
+                </li>       -->    
+            </ul>
+        </section>
+        <footer>
+            <div>
+                <span>{{totalNum}}{{totalNum<=1?"item":"items"}}</span> | 
+                <span>{{comNum}} completed</span>
+            </div>
+            <div id="showbtn">
+                <a id="tag1" @click="showAll" tag=1>show all<a> |
+                <a id="tag2" @click="showunfinished"  tag=2>show action<a> |
+                <a id="tag3" @click="showfinished"  tag=3>show complete<a>
+            </div>
+        </footer>
+    </div>
+    <script type="text/javascript">
+         const STORAGE_KEY = 'todos-vuejs';
+         const storage_key_num = "totalNum";
+         const storage_key_comNum = "comlen"
+         const fetch = (keyVal) => {
+            if(keyVal==STORAGE_KEY){
+                return JSON.parse(window.localStorage.getItem(keyVal))||[];
+            }else if(keyVal==storage_key_num){
+                return window.localStorage.getItem(keyVal)
+            }else if(keyVal==storage_key_comNum){
+                return window.localStorage.getItem(keyVal)
+            }
+           
+
+
+         }
+
+         var oldArr = fetch(STORAGE_KEY);
+   
+         const $ = (id) =>{
+            return document.getElementById(id)
+         }
+
+         var filter = {
+            all :function(oldArr){
+                return oldArr
+            },
+            finished: function(oldArr){
+                return oldArr.filter(function(item){
+                    return item.iscom;
+                })
+            },
+            unfinished:function(oldArr){
+               return oldArr.filter(function(item){
+                   return !item.iscom
+               })
+            }
+         }
+         // filter.all()
+         var myVue = new Vue({
+          
+            el:'#app',
+            data:{
+              
+                oldArr:oldArr,
+                totalNum:fetch(storage_key_num),
+                comNum:fetch(storage_key_comNum),
+                isAll:false,
+                newArr:[],
+                visibility :'all'
+            },
+          
+              
+            methods:{
+
+                addlist:function(e){
+                    var _self = this;
+                    function realAdd(){
+                       
+                        var newlist = $("newlist").value;
+                        if(newlist){
+                            
+                            let newrr = _self.oldArr;
+                            // console.log(_self.oldArr)
+                            newrr.push({title:newlist,iscom:false})
+                           $("newlist").value = "";
+                            _self.totalNum = _self.oldArr.length;
+                            $("allInput").checked = false;
+                        }
+                       
+                    }
+
+                    if(e.type=="keyup"){
+                      if(e.keyCode==13){
+                           realAdd()
+                                                                       
+                      }
+                    }else if(e.type=="click"){
+                        realAdd()
+                    }  
+                
+                },
+                choseCom:function(e){
+                    var _self = this;
+                    if(e.target.checked){
+                        this.comNum ++
+                        $("allInput").checked = true;
+                    }else{
+                       this.comNum--
+                    }
+
+                    _self.oldArr.map(function(item){
+                      
+                       if(!item.iscom){
+                          $("allInput").checked = false;
+                          
+
+                       }
+                        
+                       
+                                              
+                    })
+                    
+                },
+
+                selectAll:function(e){
+                    var _self = this;
+                  _self.isAll = e.target.checked;
+                   
+                    _self.oldArr.map(function(item){
+                         item.iscom = _self.isAll;
+                      })
+                    if(_self.isAll){
+                        _self.comNum = _self.oldArr.length;
+                    }else{
+                        _self.comNum = 0;
+                    }
+
+                  
+                },
+                deletli:function(index){
+                    var _self = this;
+                    _self.totalNum--;
+                    _self.oldArr.splice(index,1);
+                   
+                    _self.comNum = 0;
+                    _self.oldArr.map(function(item){
+                        if(item.iscom){
+                             ++_self.comNum;
+                        }
+                    })
+
+                },
+                showAll:function(){var _self = this;filter.all(_self.oldArr)},
+                showunfinished:function(){var _self = this;filter.unfinished(_self.oldArr)},
+                showfinished:function(){var _self = this;filter.finished(_self.oldArr)},
+                showa:function(e){
+                    var _self = this;
+                
+                    var e = e || window.event;
+                    var target = e.target || e.srcElement;
+                  
+                   var tagVal = target.getAttribute("tag");
+                   switch(tagVal-0){
+                     case 1:
+                        filter.all(_self.oldArr)
+                        break;
+                     case 2:
+                        filter.finished(_self.oldArr)
+                        break;
+                      case 3:
+                         return _self.oldArr.filter(function(item){
+                                   return item.iscom
+                              })
+
+                          break;
+                       default:
+                          alert("going wrong")
+                   }
+
+                }
+
+
+            },
+           
+            computed:{
+                filteredList :function(){
+
+                }
+            },
+            watch:{
+               oldArr:{
+                    handler:function(oldArr){
+                        window.localStorage.setItem(STORAGE_KEY,JSON.stringify(oldArr))
+                        window.localStorage.setItem(storage_key_num,oldArr.length)
+                        var i=0
+                        oldArr.map(function(item){
+                            
+                           if(item.iscom){
+                               i += 1;
+                           }
+                        })
+                     
+                        window.localStorage.setItem(storage_key_comNum,i)
+                        
+                    },
+                    deep:true
+
+               },
+
+               
+               
+            }
+         })
+    </script>
+</body>
+</html>
